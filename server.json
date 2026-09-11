@@ -1,0 +1,31 @@
+{
+    "executable": "midea-poly.py",
+    "name": "Midea AC",
+    "type": "Python3",
+    "shortPoll": 60,
+    "longPoll": 300,
+    "start": "midea-poly.py",
+    "credits": [
+        {
+            "title": "midea-msmart (msmart-ng)",
+            "author": "mill1000",
+            "version": "2025.x",
+            "url": "https://github.com/mill1000/midea-msmart",
+            "license": "MIT"
+        }
+    ],
+    "author": "Peter Shipley",
+    "description": "Monitor and control Midea (and associated brand) smart air conditioners locally on your LAN using the msmart-ng library.",
+    "documentationLink": "https://github.com/evilpete/eisy-polyg-midea/blob/main/README.md",
+    "license": "MIT",
+    "iconUrl": "",
+    "logo": "",
+    "requestId": false,
+    "enableOAuth": false,
+    "initialLogLevel": 20,
+    "notice": "",
+    "install": "install.sh",
+    "typedParams": [],
+    "pg3_version": "3.0.0",
+    "profile_version": "1.0.0"
+}

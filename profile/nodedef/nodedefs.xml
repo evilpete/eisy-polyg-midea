@@ -1,0 +1,134 @@
+<nodeDefs>
+
+  <!-- ============================================================= -->
+  <!-- Controller                                                     -->
+  <!-- ============================================================= -->
+  <nodeDef id="MIDEACTRL" nodeType="139" nls="MIDEACTRL">
+    <sts>
+      <st id="ST" editor="M_CTLST" />
+      <st id="GV0" editor="M_COUNT" />
+      <st id="GV1" editor="M_COUNT" />
+    </sts>
+    <cmds>
+      <sends />
+      <accepts>
+        <cmd id="DISCOVER" />
+        <cmd id="QUERY" />
+        <cmd id="UPDATE_PROFILE" />
+        <cmd id="REMOVE_NOTICES" />
+      </accepts>
+    </cmds>
+  </nodeDef>
+
+  <!-- ============================================================= -->
+  <!-- Air conditioner (device type 0xAC)                             -->
+  <!-- ============================================================= -->
+  <nodeDef id="MIDEAAC" nodeType="139" nls="MIDEAAC">
+    <sts>
+      <st id="ST" editor="M_BOOL" />           <!-- power -->
+      <st id="GV0" editor="M_CONN" />          <!-- connection state -->
+      <st id="CLITEMP" editor="M_TEMP" />      <!-- indoor temperature -->
+      <st id="GV1" editor="M_TEMP" />          <!-- outdoor temperature -->
+      <st id="CLISPC" editor="M_SETPOINT" />   <!-- target temperature -->
+      <st id="CLIMD" editor="M_MODE" />        <!-- operational mode -->
+      <st id="CLIFS" editor="M_FAN" />         <!-- fan speed preset -->
+      <st id="GV2" editor="M_FANPCT" />        <!-- custom fan speed % -->
+      <st id="CLIHUM" editor="M_HUM" />        <!-- indoor humidity -->
+      <st id="GV3" editor="M_THUM" />          <!-- target humidity -->
+      <st id="GV4" editor="M_SWING" />         <!-- swing mode -->
+      <st id="GV5" editor="M_ANGLE" />         <!-- vertical louver angle -->
+      <st id="GV6" editor="M_ANGLE" />         <!-- horizontal louver angle -->
+      <st id="GV7" editor="M_BOOL" />          <!-- eco -->
+      <st id="GV8" editor="M_BOOL" />          <!-- turbo -->
+      <st id="GV9" editor="M_BOOL" />          <!-- sleep -->
+      <st id="GV10" editor="M_BOOL" />         <!-- freeze protection -->
+      <st id="GV11" editor="M_BOOL" />         <!-- display / LED -->
+      <st id="GV12" editor="M_BOOL" />         <!-- purifier / ionizer -->
+      <st id="GV13" editor="M_BOOL" />         <!-- follow me -->
+      <st id="GV14" editor="M_BOOL" />         <!-- filter alert -->
+      <st id="GV15" editor="M_BOOL" />         <!-- self clean active -->
+      <st id="GV16" editor="M_ERR" />          <!-- error code -->
+      <st id="GV17" editor="M_BREEZE" />       <!-- breeze mode -->
+      <st id="GV18" editor="M_FRESH" />        <!-- fresh air fan speed -->
+      <st id="GV19" editor="M_RATE" />         <!-- rate select / gear -->
+      <st id="GV20" editor="M_AUX" />          <!-- aux heat mode -->
+      <st id="GV21" editor="M_KWH" />          <!-- total energy -->
+      <st id="GV22" editor="M_WATT" />         <!-- real time power -->
+      <st id="GV23" editor="M_BOOL" />         <!-- beep on command -->
+      <st id="GV24" editor="M_BOOL" />         <!-- defrost active -->
+      <st id="GV25" editor="M_HZ" />           <!-- compressor frequency -->
+      <st id="GV26" editor="M_TEMP" />         <!-- indoor coil temp (T2) -->
+      <st id="GV27" editor="M_TEMP" />         <!-- outdoor coil temp (T3) -->
+    </sts>
+    <cmds>
+      <sends />
+      <accepts>
+        <cmd id="DON" />
+        <cmd id="DOF" />
+        <cmd id="QUERY" />
+        <cmd id="SELFCLEAN" />
+        <cmd id="CLISPC">
+          <p id="" editor="M_SETPOINT_CMD" init="CLISPC" />
+        </cmd>
+        <cmd id="CLIMD">
+          <p id="" editor="M_MODE" init="CLIMD" />
+        </cmd>
+        <cmd id="CLIFS">
+          <p id="" editor="M_FAN" init="CLIFS" />
+        </cmd>
+        <cmd id="SETFANPCT">
+          <p id="" editor="M_FANPCT" init="GV2" />
+        </cmd>
+        <cmd id="SETTHUM">
+          <p id="" editor="M_THUM" init="GV3" />
+        </cmd>
+        <cmd id="SETSWING">
+          <p id="" editor="M_SWING" init="GV4" />
+        </cmd>
+        <cmd id="SETVANGLE">
+          <p id="" editor="M_ANGLE" init="GV5" />
+        </cmd>
+        <cmd id="SETHANGLE">
+          <p id="" editor="M_ANGLE" init="GV6" />
+        </cmd>
+        <cmd id="SETECO">
+          <p id="" editor="M_BOOL" init="GV7" />
+        </cmd>
+        <cmd id="SETTURBO">
+          <p id="" editor="M_BOOL" init="GV8" />
+        </cmd>
+        <cmd id="SETSLEEP">
+          <p id="" editor="M_BOOL" init="GV9" />
+        </cmd>
+        <cmd id="SETFREEZE">
+          <p id="" editor="M_BOOL" init="GV10" />
+        </cmd>
+        <cmd id="SETDISPLAY">
+          <p id="" editor="M_BOOL" init="GV11" />
+        </cmd>
+        <cmd id="SETPURIFY">
+          <p id="" editor="M_BOOL" init="GV12" />
+        </cmd>
+        <cmd id="SETFOLLOW">
+          <p id="" editor="M_BOOL" init="GV13" />
+        </cmd>
+        <cmd id="SETBREEZE">
+          <p id="" editor="M_BREEZE" init="GV17" />
+        </cmd>
+        <cmd id="SETFRESH">
+          <p id="" editor="M_FRESH" init="GV18" />
+        </cmd>
+        <cmd id="SETRATE">
+          <p id="" editor="M_RATE" init="GV19" />
+        </cmd>
+        <cmd id="SETAUX">
+          <p id="" editor="M_AUX" init="GV20" />
+        </cmd>
+        <cmd id="SETBEEP">
+          <p id="" editor="M_BOOL" init="GV23" />
+        </cmd>
+      </accepts>
+    </cmds>
+  </nodeDef>
+
+</nodeDefs>

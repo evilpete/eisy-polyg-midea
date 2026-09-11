@@ -1,0 +1,141 @@
+# Midea AC node server - US English
+
+# ---------------------------------------------------------------- Controller
+ND-MIDEACTRL-NAME = Midea Controller
+ND-MIDEACTRL-ICON = Input
+ST-MIDEACTRL-ST-NAME = Node Server Status
+ST-MIDEACTRL-GV0-NAME = Devices Configured
+ST-MIDEACTRL-GV1-NAME = Devices Online
+CMD-MIDEACTRL-DISCOVER-NAME = Re-Discover Devices
+CMD-MIDEACTRL-QUERY-NAME = Query All
+CMD-MIDEACTRL-UPDATE_PROFILE-NAME = Update Profile
+CMD-MIDEACTRL-REMOVE_NOTICES-NAME = Clear Notices
+
+# ------------------------------------------------------------- Air Conditioner
+ND-MIDEAAC-NAME = Midea Air Conditioner
+ND-MIDEAAC-ICON = Thermostat
+
+ST-MIDEAAC-ST-NAME = Power
+ST-MIDEAAC-GV0-NAME = Connection
+ST-MIDEAAC-CLITEMP-NAME = Indoor Temperature
+ST-MIDEAAC-GV1-NAME = Outdoor Temperature
+ST-MIDEAAC-CLISPC-NAME = Target Temperature
+ST-MIDEAAC-CLIMD-NAME = Mode
+ST-MIDEAAC-CLIFS-NAME = Fan Speed
+ST-MIDEAAC-GV2-NAME = Fan Speed %
+ST-MIDEAAC-CLIHUM-NAME = Indoor Humidity
+ST-MIDEAAC-GV3-NAME = Target Humidity
+ST-MIDEAAC-GV4-NAME = Swing Mode
+ST-MIDEAAC-GV5-NAME = Vertical Louver
+ST-MIDEAAC-GV6-NAME = Horizontal Louver
+ST-MIDEAAC-GV7-NAME = Eco Mode
+ST-MIDEAAC-GV8-NAME = Turbo Mode
+ST-MIDEAAC-GV9-NAME = Sleep Mode
+ST-MIDEAAC-GV10-NAME = Freeze Protection
+ST-MIDEAAC-GV11-NAME = Display
+ST-MIDEAAC-GV12-NAME = Purifier
+ST-MIDEAAC-GV13-NAME = Follow Me
+ST-MIDEAAC-GV14-NAME = Filter Alert
+ST-MIDEAAC-GV15-NAME = Self Clean Active
+ST-MIDEAAC-GV16-NAME = Error Code
+ST-MIDEAAC-GV17-NAME = Breeze Mode
+ST-MIDEAAC-GV18-NAME = Fresh Air
+ST-MIDEAAC-GV19-NAME = Power Gear
+ST-MIDEAAC-GV20-NAME = Aux Heat
+ST-MIDEAAC-GV21-NAME = Total Energy
+ST-MIDEAAC-GV22-NAME = Power Usage
+ST-MIDEAAC-GV23-NAME = Beep On Command
+ST-MIDEAAC-GV24-NAME = Defrost Active
+ST-MIDEAAC-GV25-NAME = Compressor Frequency
+ST-MIDEAAC-GV26-NAME = Indoor Coil Temp
+ST-MIDEAAC-GV27-NAME = Outdoor Coil Temp
+
+CMD-MIDEAAC-DON-NAME = Power On
+CMD-MIDEAAC-DOF-NAME = Power Off
+CMD-MIDEAAC-QUERY-NAME = Query
+CMD-MIDEAAC-SELFCLEAN-NAME = Start Self Clean
+CMD-MIDEAAC-CLISPC-NAME = Set Target Temperature
+CMD-MIDEAAC-CLIMD-NAME = Set Mode
+CMD-MIDEAAC-CLIFS-NAME = Set Fan Speed
+CMD-MIDEAAC-SETFANPCT-NAME = Set Fan Speed %
+CMD-MIDEAAC-SETTHUM-NAME = Set Target Humidity
+CMD-MIDEAAC-SETSWING-NAME = Set Swing Mode
+CMD-MIDEAAC-SETVANGLE-NAME = Set Vertical Louver
+CMD-MIDEAAC-SETHANGLE-NAME = Set Horizontal Louver
+CMD-MIDEAAC-SETECO-NAME = Set Eco Mode
+CMD-MIDEAAC-SETTURBO-NAME = Set Turbo Mode
+CMD-MIDEAAC-SETSLEEP-NAME = Set Sleep Mode
+CMD-MIDEAAC-SETFREEZE-NAME = Set Freeze Protection
+CMD-MIDEAAC-SETDISPLAY-NAME = Set Display
+CMD-MIDEAAC-SETPURIFY-NAME = Set Purifier
+CMD-MIDEAAC-SETFOLLOW-NAME = Set Follow Me
+CMD-MIDEAAC-SETBREEZE-NAME = Set Breeze Mode
+CMD-MIDEAAC-SETFRESH-NAME = Set Fresh Air
+CMD-MIDEAAC-SETRATE-NAME = Set Power Gear
+CMD-MIDEAAC-SETAUX-NAME = Set Aux Heat
+CMD-MIDEAAC-SETBEEP-NAME = Set Beep On Command
+
+# ------------------------------------------------------------------- Index maps
+
+M_BOOL-0 = Off
+M_BOOL-1 = On
+
+M_CONN-0 = Offline
+M_CONN-1 = Online
+M_CONN-2 = Authentication Failed
+M_CONN-3 = Unsupported Device
+M_CONN-4 = Connecting
+
+M_CTLST-0 = Not Connected
+M_CTLST-1 = Connected
+M_CTLST-2 = Error
+
+M_MODE-1 = Auto
+M_MODE-2 = Cool
+M_MODE-3 = Dry
+M_MODE-4 = Heat
+M_MODE-5 = Fan Only
+M_MODE-6 = Smart Dry
+
+M_FAN-20 = Silent
+M_FAN-40 = Low
+M_FAN-60 = Medium
+M_FAN-80 = High
+M_FAN-100 = Max
+M_FAN-102 = Auto
+
+M_SWING-0 = Off
+M_SWING-3 = Horizontal
+M_SWING-12 = Vertical
+M_SWING-15 = Both
+
+M_ANGLE-0 = Off
+M_ANGLE-1 = Position 1
+M_ANGLE-25 = Position 2
+M_ANGLE-50 = Position 3
+M_ANGLE-75 = Position 4
+M_ANGLE-100 = Position 5
+
+M_BREEZE-1 = Off
+M_BREEZE-2 = Breeze Away
+M_BREEZE-3 = Breeze Mild
+M_BREEZE-4 = Breezeless
+
+M_FRESH-0 = Off
+M_FRESH-40 = Low
+M_FRESH-60 = Medium
+M_FRESH-80 = High
+M_FRESH-100 = Boost
+
+M_RATE-1 = Level 1
+M_RATE-20 = Level 2
+M_RATE-40 = Level 3
+M_RATE-50 = Gear 50%
+M_RATE-60 = Level 4
+M_RATE-75 = Gear 75%
+M_RATE-80 = Level 5
+M_RATE-100 = Off
+
+M_AUX-0 = Off
+M_AUX-1 = Aux Heat
+M_AUX-2 = Aux Heat Only
