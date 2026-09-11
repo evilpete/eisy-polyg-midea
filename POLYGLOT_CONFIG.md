@@ -46,6 +46,10 @@ Fields inside the value, separated by `;` (or `,`):
 
 A value with no `=` in it is treated as a bare IP address.
 
+The `token` and `key` must be hexadecimal exactly as `msmart-ng discover`
+printed them; a typo is reported here as a notice rather than leaving the node
+mysteriously offline.
+
 Configured devices are always probed directly, so they work whether or not
 broadcast discovery is enabled, and a hand-entered token/key is never
 overwritten by discovery.

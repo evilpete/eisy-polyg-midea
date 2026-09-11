@@ -216,6 +216,24 @@ class TestParameterParsing(unittest.TestCase):
         self.assertEqual(self.controller.configured, {})
         self.assertTrue(self.controller.Notices)
 
+    def test_non_hex_token_is_rejected(self):
+        self.controller.parameter_handler(
+            {'Den': 'ip=10.1.1.40; id=1; token=ZZ; key=AABB'})
+        self.assertEqual(self.controller.configured, {})
+        self.assertTrue(any('hexadecimal' in text
+                            for text in self.controller.Notices.values()))
+
+    def test_odd_length_key_is_rejected(self):
+        self.controller.parameter_handler(
+            {'Den': 'ip=10.1.1.40; id=1; token=AABB; key=ABC'})
+        self.assertEqual(self.controller.configured, {})
+
+    def test_valid_hex_credentials_are_accepted(self):
+        self.controller.parameter_handler(
+            {'Den': 'ip=10.1.1.40; id=1; token=aabbCC; key=0011'})
+        self.assertEqual(len(self.controller.configured), 1)
+        self.assertFalse(self.controller.Notices)
+
     def test_missing_ip_is_rejected(self):
         self.controller.parameter_handler({'Den': 'id=1; token=A; key=B'})
         self.assertEqual(self.controller.configured, {})
@@ -450,7 +468,7 @@ class TestDiscoveryAndPolling(unittest.TestCase):
 
     def test_unreachable_configured_device_still_gets_a_node_via_id(self):
         self.controller.parameter_handler({
-            'Bedroom': 'ip=10.1.1.39; id=151732604872862; token=A; key=B'})
+            'Bedroom': 'ip=10.1.1.39; id=151732604872862; token=AA; key=BB'})
         self.controller.discover()
         self.assertIn(address_for(151732604872862),
                       self.controller.nodes_by_address)

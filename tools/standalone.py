@@ -7,26 +7,40 @@ no Polyglot, no ISY and no EISY involved, and prints exactly which ISY drivers
 would be set. Use it to debug a device before or instead of installing the
 plugin.
 
-    ./tools/standalone.py discover
-    ./tools/standalone.py probe 10.1.1.39
+Connection details live in a config file written in exactly the same syntax as
+PG3 Custom Parameters, so whatever works here can be pasted straight into PG3:
+
+    # devices.conf
+    temp_units = F
+    Bedroom = ip=10.1.1.39; id=151732604872862; token=<TOKEN>; key=<KEY>
+    Den     = ip=10.1.1.40; id=151732604872863; token=<TOKEN>; key=<KEY>
+
+Searched in order: --config, $MIDEA_CONFIG, ./devices.conf,
+~/.config/midea-poly/devices.conf, ~/.midea-devices.conf.
+
+    ./tools/standalone.py devices                    # what is in the file
+    ./tools/standalone.py discover --save            # append what it finds
+    ./tools/standalone.py query   --device Bedroom
+    ./tools/standalone.py watch   --device Bedroom -n 10 -i 15
+    ./tools/standalone.py control --device Bedroom --cmd CLISPC --value 72
+    ./tools/standalone.py raw     --device Bedroom
+    ./tools/standalone.py caps    --device Bedroom
+
+Everything can also be given on the command line, which overrides the file:
+
     ./tools/standalone.py query 10.1.1.39 --id 151732604872862 \
         --token <TOKEN> --key <KEY>
-    ./tools/standalone.py caps  10.1.1.39 --id ... --token ... --key ...
-    ./tools/standalone.py watch 10.1.1.39 --id ... --token ... --key ... -n 10
-    ./tools/standalone.py control 10.1.1.39 --id ... --token ... --key ... \
-        --cmd CLISPC --value 72
-    ./tools/standalone.py raw 10.1.1.39 --id ... --token ... --key ...
+    ./tools/standalone.py query --param 'ip=10.1.1.39; id=...; token=...; key=...'
 
-Connection details can also be given exactly as they appear in a PG3 custom
-parameter, which is the easiest way to check that a parameter is well formed:
-
-    ./tools/standalone.py query --param 'ip=10.1.1.39; id=151732604872862; token=AA; key=BB'
+$MIDEA_TOKEN and $MIDEA_KEY are used if neither the file nor the command line
+supplies them, so credentials need never appear in shell history.
 """
 
 import argparse
 import json
 import logging
 import os
+import stat
 import sys
 import time
 import xml.etree.ElementTree as ET
@@ -42,9 +56,118 @@ import udi_interface  # noqa: E402
 from nodes.ac import MideaACNode  # noqa: E402
 from nodes.aioloop import RUNNER  # noqa: E402
 from nodes.controller import Controller  # noqa: E402
-from nodes.mapping import address_for  # noqa: E402
+from nodes.mapping import address_for, is_hex, safe_name  # noqa: E402
 
 PROFILE = os.path.join(ROOT, 'profile')
+
+CONFIG_CANDIDATES = (
+    os.path.join(os.getcwd(), 'devices.conf'),
+    os.path.expanduser('~/.config/midea-poly/devices.conf'),
+    os.path.expanduser('~/.midea-devices.conf'),
+)
+
+DEFAULT_SAVE_PATH = os.path.expanduser('~/.config/midea-poly/devices.conf')
+
+
+# ------------------------------------------------------------- config file
+
+def find_config(explicit=None):
+    """Locate the config file. An explicit path that is missing is an error."""
+    if explicit:
+        if not os.path.exists(explicit):
+            raise SystemExit(f'No such config file: {explicit}')
+        return explicit
+
+    from_env = os.environ.get('MIDEA_CONFIG')
+    if from_env:
+        if not os.path.exists(from_env):
+            raise SystemExit(f'$MIDEA_CONFIG points at a missing file: '
+                             f'{from_env}')
+        return from_env
+
+    for path in CONFIG_CANDIDATES:
+        if os.path.exists(path):
+            return path
+    return None
+
+
+def read_config(path):
+    """Read a config file into the same dict shape PG3 hands the plugin."""
+    params = {}
+    if not path:
+        return params
+
+    with open(path) as handle:
+        for number, line in enumerate(handle, 1):
+            line = line.strip()
+            if not line or line.startswith('#') or line.startswith(';'):
+                continue
+            if '=' not in line:
+                print(f'{path}:{number}: ignoring line with no "="')
+                continue
+            key, _, value = line.partition('=')
+            params[key.strip()] = value.strip()
+
+    mode = stat.S_IMODE(os.stat(path).st_mode)
+    if mode & (stat.S_IRWXG | stat.S_IRWXO):
+        print(f'Warning: {path} is readable by other users. It holds device '
+              f'credentials; consider: chmod 600 {path}')
+
+    return params
+
+
+def append_to_config(path, entries):
+    """Append discovered devices to the config file, skipping known ids."""
+    existing = read_config(path) if os.path.exists(path) else {}
+    known_ids = set()
+    known_keys = set(existing)
+    for value in existing.values():
+        for part in str(value).replace(',', ';').split(';'):
+            field, _, field_value = part.partition('=')
+            if field.strip().lower() == 'id':
+                known_ids.add(field_value.strip())
+
+    new_lines = []
+    for info in entries:
+        if str(info['id']) in known_ids:
+            print(f'  {info["name"]} ({info["ip"]}) is already in the file')
+            continue
+
+        key = safe_name(info['name']).replace(' ', '_')
+        suffix = 2
+        while key in known_keys:
+            key = f'{safe_name(info["name"]).replace(" ", "_")}_{suffix}'
+            suffix += 1
+        known_keys.add(key)
+
+        if info.get('version') == 3:
+            new_lines.append(
+                '# V3 device: fill in token and key from `msmart-ng discover`')
+            new_lines.append(
+                f'{key} = ip={info["ip"]}; id={info["id"]}; token=; key=')
+        else:
+            new_lines.append(f'{key} = ip={info["ip"]}; id={info["id"]}')
+        print(f'  added {key} -> {info["ip"]}')
+
+    if not new_lines:
+        print('Nothing new to add.')
+        return
+
+    os.makedirs(os.path.dirname(os.path.abspath(path)) or '.', exist_ok=True)
+    is_new = not os.path.exists(path)
+    with open(path, 'a') as handle:
+        if is_new:
+            handle.write('# Midea node server device list.\n'
+                         '# Same syntax as PG3 Custom Parameters.\n'
+                         'temp_units = F\n')
+        handle.write('\n')
+        handle.write('\n'.join(new_lines))
+        handle.write('\n')
+
+    if is_new:
+        os.chmod(path, 0o600)
+
+    print(f'Wrote {path}')
 
 
 # ------------------------------------------------------------------ profile
@@ -86,13 +209,11 @@ def print_drivers(node):
     print(f'\n{node.name}  [{node.address}]  {node.config.get("ip")}')
     print('-' * 68)
 
-    order = [d['driver'] for d in MideaACNode.drivers]
-    for driver in order:
+    for driver in [d['driver'] for d in MideaACNode.drivers]:
         value = node.driver_values.get(driver)
         label = nls.get(f'ST-MIDEAAC-{driver}-NAME', driver)
 
-        editor = driver_editor.get(driver)
-        prefix = index_editors.get(editor)
+        prefix = index_editors.get(driver_editor.get(driver))
         shown = value
         if prefix is not None:
             try:
@@ -107,19 +228,120 @@ def print_drivers(node):
 
 # --------------------------------------------------------------- scaffolding
 
-def build(args):
-    """Build a controller and one node, the same way the plugin does."""
+def make_controller(args):
+    """Build a controller seeded from the config file, then CLI overrides."""
     polyglot = udi_interface.Interface([])
     controller = Controller(polyglot, 'controller', 'controller', 'Midea AC')
-    controller.fahrenheit = args.units.upper().startswith('F')
-    controller.beep = args.beep
-    controller.energy_stats = args.energy
-    controller.extended_sensors = args.extended
-    controller.discovery_timeout = args.timeout
 
+    path = find_config(getattr(args, 'config', None))
+    params = read_config(path)
+    if params:
+        controller.parameter_handler(params)
+
+    # Command line wins over the file.
+    units = getattr(args, 'units', None)
+    if units:
+        controller.fahrenheit = units.upper().startswith('F')
+    if getattr(args, 'beep', False):
+        controller.beep = True
+    if getattr(args, 'energy', False):
+        controller.energy_stats = True
+    if getattr(args, 'extended', False):
+        controller.extended_sensors = True
+    if getattr(args, 'timeout', None):
+        controller.discovery_timeout = args.timeout
+    if getattr(args, 'interface', None):
+        controller.discovery_interface = args.interface
+
+    return controller, path
+
+
+def device_config(controller, path, args):
+    """Work out which device to talk to, and how."""
+    if args.param:
+        config = controller._parse_device_param('standalone', args.param)
+        if config is None:
+            print('That parameter value is not valid. See the messages above.')
+        return config
+
+    config = None
+    configured = controller.configured
+
+    if args.device:
+        config = configured.get(args.device)
+        if config is None:
+            print(f'No device named "{args.device}" in '
+                  f'{path or "any config file"}.')
+            if configured:
+                print(f'Known: {", ".join(sorted(configured))}')
+            return None
+        config = dict(config)
+
+    elif args.host:
+        # A host that matches a config entry picks up that entry's credentials.
+        for entry in configured.values():
+            if entry['ip'] == args.host:
+                config = dict(entry)
+                break
+        if config is None:
+            config = {
+                'address': None, 'param_key': 'standalone',
+                'ip': args.host, 'port': 6444, 'id': None,
+                'token': None, 'key': None, 'version': None,
+                'name': args.host,
+            }
+
+    elif len(configured) == 1:
+        config = dict(next(iter(configured.values())))
+        print(f'Using the only device in {path}: {config["name"]}')
+
+    elif configured:
+        print(f'{path} has several devices. Choose one with --device NAME:')
+        for name, entry in sorted(configured.items()):
+            print(f'  {name:<20} {entry["ip"]}')
+        return None
+
+    else:
+        print('No device given and no config file found.\n'
+              'Give a host, use --param, or create a config file '
+              '(see "discover --save").')
+        return None
+
+    # Individual flags override whatever came from the file.
+    for flag, field in (('id', 'id'), ('token', 'token'), ('key', 'key'),
+                        ('port', 'port'), ('name', 'name')):
+        value = getattr(args, flag, None)
+        if value is not None:
+            config[field] = value
+
+    # Last resort for credentials, so they need not be in shell history.
+    config['token'] = config.get('token') or os.environ.get('MIDEA_TOKEN')
+    config['key'] = config.get('key') or os.environ.get('MIDEA_KEY')
+
+    if bool(config.get('token')) != bool(config.get('key')):
+        print('A token and a key must be given together.')
+        return None
+
+    for field in ('token', 'key'):
+        value = config.get(field)
+        if value is not None and not is_hex(value):
+            print(f'The {field} is not hexadecimal. Copy it exactly as '
+                  f'"msmart-ng discover" printed it.')
+            return None
+
+    config.setdefault('port', 6444)
+    if config.get('token') and config.get('key') and not config.get('version'):
+        config['version'] = 3
+
+    return config
+
+
+def build(args):
+    """Build a controller and one node, the same way the plugin does."""
+    controller, path = make_controller(args)
     RUNNER.start()
 
-    config = device_config(controller, args)
+    config = device_config(controller, path, args)
     if config is None:
         return controller, None
 
@@ -130,40 +352,23 @@ def build(args):
             print(f'Could not reach {config["ip"]}')
             return controller, None
         config['id'] = info['id']
-        config['version'] = info['version']
+        config['version'] = config.get('version') or info['version']
         config['port'] = info['port']
         print(f'Found id={config["id"]} version={config["version"]}')
 
-    address = address_for(config['id'])
-    node = MideaACNode(polyglot, 'controller', address,
+    if config.get('version') == 3 and not (config.get('token')
+                                           and config.get('key')):
+        print(f'\n{config["ip"]} is a V3 device and needs a token and key.\n'
+              f'Run "msmart-ng discover" to fetch them, then add them to your '
+              f'config file:\n'
+              f'  {config.get("name")} = ip={config["ip"]}; '
+              f'id={config["id"]}; token=<TOKEN>; key=<KEY>\n')
+
+    node = MideaACNode(controller.poly, 'controller',
+                       address_for(config['id']),
                        config.get('name') or 'Midea AC', config, controller)
-    polyglot.addNode(node)
+    controller.poly.addNode(node)
     return controller, node
-
-
-def device_config(controller, args):
-    """Resolve connection details from --param or the individual flags."""
-    if args.param:
-        config = controller._parse_device_param('standalone', args.param)
-        if config is None:
-            print('That parameter value is not valid. See the messages above.')
-        return config
-
-    if not args.host:
-        print('Give a host, or use --param.')
-        return None
-
-    return {
-        'address': None,
-        'param_key': 'standalone',
-        'ip': args.host,
-        'port': args.port,
-        'id': args.id,
-        'token': args.token,
-        'key': args.key,
-        'version': 3 if (args.token and args.key) else None,
-        'name': args.name or args.host,
-    }
 
 
 def connect(node):
@@ -175,11 +380,43 @@ def connect(node):
 
 # -------------------------------------------------------------- subcommands
 
+def cmd_devices(args):
+    controller, path = make_controller(args)
+
+    if path is None:
+        print('No config file found. Looked for:')
+        for candidate in CONFIG_CANDIDATES:
+            print(f'  {candidate}')
+        print('\nCreate one with "discover --save", or write it by hand:\n')
+        print('  temp_units = F')
+        print('  Bedroom = ip=10.1.1.39; id=151732604872862; '
+              'token=<TOKEN>; key=<KEY>')
+        return 1
+
+    print(f'Config file: {path}\n')
+    print(f'  units               {"F" if controller.fahrenheit else "C"}')
+    print(f'  discovery           {controller.discovery_enabled}')
+    print(f'  discovery_timeout   {controller.discovery_timeout}')
+    print(f'  beep                {controller.beep}')
+    print(f'  energy_stats        {controller.energy_stats}')
+    print(f'  extended_sensors    {controller.extended_sensors}')
+
+    print('\nDevices:')
+    for name, config in sorted(controller.configured.items()):
+        creds = 'token+key set' if config['token'] else 'no token/key'
+        print(f'  {name:<20} {config["ip"]:<16} id={config["id"]}  {creds}')
+    if not controller.configured:
+        print('  (none)')
+
+    if controller.Notices:
+        print('\nNotices that would appear in PG3:')
+        for text in controller.Notices.values():
+            print(f'  - {text}')
+    return 0
+
+
 def cmd_discover(args):
-    polyglot = udi_interface.Interface([])
-    controller = Controller(polyglot, 'controller', 'controller', 'Midea AC')
-    controller.discovery_timeout = args.timeout
-    controller.discovery_interface = args.interface
+    controller, path = make_controller(args)
     RUNNER.start()
 
     found = controller._broadcast()
@@ -202,13 +439,17 @@ def cmd_discover(args):
         if info['version'] == 3:
             print('  -> V3 device: needs token and key. Run "msmart-ng '
                   'discover" to fetch them.')
+
+    if args.save:
+        target = args.config or path or DEFAULT_SAVE_PATH
+        print(f'\nSaving to {target}')
+        append_to_config(target, found)
+
     return 0
 
 
 def cmd_probe(args):
-    polyglot = udi_interface.Interface([])
-    controller = Controller(polyglot, 'controller', 'controller', 'Midea AC')
-    controller.discovery_timeout = args.timeout
+    controller, _ = make_controller(args)
     RUNNER.start()
 
     info = controller._probe(args.host)
@@ -288,7 +529,7 @@ def cmd_control(args):
 
 
 def cmd_params(args):
-    """Parse a set of custom parameters without touching any hardware."""
+    """Parse custom parameters given on the command line, no hardware needed."""
     polyglot = udi_interface.Interface([])
     controller = Controller(polyglot, 'controller', 'controller', 'Midea AC')
 
@@ -299,17 +540,9 @@ def cmd_params(args):
 
     controller.parameter_handler(params)
 
-    print('\nSettings:')
-    print(f'  units               {"F" if controller.fahrenheit else "C"}')
-    print(f'  discovery           {controller.discovery_enabled}')
-    print(f'  discovery_timeout   {controller.discovery_timeout}')
-    print(f'  beep                {controller.beep}')
-    print(f'  energy_stats        {controller.energy_stats}')
-    print(f'  extended_sensors    {controller.extended_sensors}')
-
     print('\nDevices:')
-    for address, config in controller.configured.items():
-        print(f'  {address}  {json.dumps(config, default=str)}')
+    for name, config in controller.configured.items():
+        print(f'  {name}  {json.dumps(config, default=str)}')
     if not controller.configured:
         print('  (none)')
 
@@ -329,21 +562,27 @@ def main():
         epilog=__doc__)
     parser.add_argument('--debug', action='store_true',
                         help='full library debug logging')
-    parser.add_argument('--timeout', type=int, default=5,
-                        help='discovery timeout in seconds (default 5)')
+
+    def add_common(sub):
+        sub.add_argument('--config', help='path to the device config file')
+        sub.add_argument('--timeout', type=int, default=None,
+                         help='discovery timeout in seconds (default 5)')
 
     def add_device_args(sub):
+        add_common(sub)
         sub.add_argument('host', nargs='?', help='device IP or hostname')
+        sub.add_argument('--device',
+                         help='name of an entry in the config file')
         sub.add_argument('--id', type=int, help='Midea device id')
         sub.add_argument('--token', help='V3 token (hex)')
         sub.add_argument('--key', help='V3 key (hex)')
-        sub.add_argument('--port', type=int, default=6444)
+        sub.add_argument('--port', type=int, default=None)
         sub.add_argument('--name', help='node name to use')
         sub.add_argument('--param',
                          help='connection details in PG3 custom parameter '
                               'form, e.g. "ip=10.1.1.39; id=...; token=...; '
                               'key=..."')
-        sub.add_argument('--units', default='F', choices=['F', 'C', 'f', 'c'])
+        sub.add_argument('--units', default=None, choices=['F', 'C', 'f', 'c'])
         sub.add_argument('--beep', action='store_true',
                          help='let the unit beep on each command')
         sub.add_argument('--energy', action='store_true',
@@ -353,11 +592,19 @@ def main():
 
     subs = parser.add_subparsers(dest='command', required=True)
 
+    sub = subs.add_parser('devices', help='show the configured devices')
+    add_common(sub)
+    sub.set_defaults(func=cmd_devices)
+
     sub = subs.add_parser('discover', help='broadcast for devices')
+    add_common(sub)
     sub.add_argument('--interface', help='local interface address to bind')
+    sub.add_argument('--save', action='store_true',
+                     help='append what is found to the config file')
     sub.set_defaults(func=cmd_discover)
 
     sub = subs.add_parser('probe', help='unicast discovery of one host')
+    add_common(sub)
     sub.add_argument('host')
     sub.set_defaults(func=cmd_probe)
 
@@ -385,11 +632,12 @@ def main():
     add_device_args(sub)
     sub.add_argument('--cmd', required=True,
                      help='ISY command id, e.g. DON, DOF, CLIMD, CLISPC')
-    sub.add_argument('--value', help='command parameter, if the command takes one')
+    sub.add_argument('--value',
+                     help='command parameter, if the command takes one')
     sub.set_defaults(func=cmd_control)
 
     sub = subs.add_parser(
-        'params', help='parse custom parameters without any hardware')
+        'params', help='parse custom parameters given on the command line')
     sub.add_argument('param_entry', nargs='+',
                      help='"key=value" pairs as entered in PG3')
     sub.set_defaults(func=cmd_params)

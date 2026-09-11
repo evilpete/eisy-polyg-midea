@@ -5,3 +5,8 @@ venv/
 *.egg-info/
 .DS_Store
 *.log
+
+# Local device credentials for tools/standalone.py
+devices.conf
+*.devices.conf
+midea-devices.conf

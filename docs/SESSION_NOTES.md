@@ -53,18 +53,27 @@ POLYGLOT_CONFIG.md        shown on the PG3 configuration page
 
 ```shell
 pip install msmart-ng          # udi_interface is NOT needed off-box
-python3 tests/run.py           # 50 tests, all offline
+python3 tests/run.py           # 53 tests, all offline
 
 # Against real hardware, with no Polyglot involved:
-./tools/standalone.py discover
+./tools/standalone.py discover --save          # find units, write devices.conf
+./tools/standalone.py devices                  # show what is configured
 ./tools/standalone.py probe 10.1.1.39
-./tools/standalone.py query   10.1.1.39 --id <ID> --token <TOK> --key <KEY>
-./tools/standalone.py raw     10.1.1.39 --id <ID> --token <TOK> --key <KEY>
-./tools/standalone.py caps    10.1.1.39 --id <ID> --token <TOK> --key <KEY>
-./tools/standalone.py watch   10.1.1.39 --id <ID> ... -n 5 -i 15
-./tools/standalone.py control 10.1.1.39 --id <ID> ... --cmd CLISPC --value 72
+./tools/standalone.py query   --device Bedroom
+./tools/standalone.py raw     --device Bedroom
+./tools/standalone.py caps    --device Bedroom
+./tools/standalone.py watch   --device Bedroom -n 5 -i 15
+./tools/standalone.py control --device Bedroom --cmd CLISPC --value 72
 ./tools/standalone.py params 'temp_units=F' 'Bedroom=ip=10.1.1.39; id=...'
 ```
+
+**Where credentials live.** On the EISY: PG3 Custom Parameters. For the
+standalone tool: a config file in the identical syntax, so entries can be
+pasted between the two. Searched in order — `--config`, `$MIDEA_CONFIG`,
+`./devices.conf`, `~/.config/midea-poly/devices.conf`, `~/.midea-devices.conf`.
+`$MIDEA_TOKEN` / `$MIDEA_KEY` are a last-resort fallback. The tool warns on a
+group- or world-readable file and creates new ones as 0600; `devices.conf` is
+gitignored.
 
 `query` prints the ISY drivers with their decoded labels, so it shows exactly
 what the Admin Console would show. `raw` prints the library's own view. Add
@@ -122,6 +131,12 @@ only every `Controller.REDISCOVER_EVERY` (12) long polls — about hourly at the
 default 300 s — but immediately if any node is not online or a configured
 device has no node yet.
 
+**Credential validation.** msmart calls `bytes.fromhex()` on the token and
+key, which raises `ValueError` on a typo. `mapping.is_hex()` checks both before
+they reach the library, so a mistyped parameter produces a clear PG3 notice
+instead of a traceback and a mysteriously offline node. `ac.connect()` also
+catches `ValueError` and reports Authentication Failed.
+
 **Device count driver.** `GV0` counts existing nodes, not what the last
 broadcast happened to see, so a missed broadcast does not make the count drop.
 
@@ -130,7 +145,7 @@ and goes to `Offline`, so ISY programs referencing it survive an outage.
 
 ## 6. Status
 
-* All 50 offline tests pass.
+* All 53 offline tests pass.
 * **Not yet run against real hardware.** The owner will test on their own units
   between sessions and supply token/key at that time.
 

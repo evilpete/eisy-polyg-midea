@@ -102,6 +102,22 @@ def command_value(command, fallback=None):
     return fallback if value is None else value
 
 
+def is_hex(value) -> bool:
+    """True if the string is a usable hex token or key.
+
+    msmart calls bytes.fromhex() on these, which raises ValueError on a typo,
+    so they are checked before they reach the library.
+    """
+    text = str(value).strip()
+    if not text or len(text) % 2:
+        return False
+    try:
+        bytes.fromhex(text)
+    except ValueError:
+        return False
+    return True
+
+
 def address_for(device_id: int) -> str:
     """Build a legal ISY node address (<=14 chars) from a Midea device id.
 

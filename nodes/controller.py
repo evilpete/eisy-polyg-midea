@@ -12,8 +12,8 @@ from msmart.const import DeviceType
 from .ac import MideaACNode
 from .aioloop import RUNNER
 from .mapping import (CTRL_CONNECTED, CTRL_ERROR, CTRL_NOT_CONNECTED,
-                      CONN_ONLINE, UOM_INDEX, UOM_RAW, address_for, parse_bool,
-                      parse_int, safe_name)
+                      CONN_ONLINE, UOM_INDEX, UOM_RAW, address_for, is_hex,
+                      parse_bool, parse_int, safe_name)
 
 LOGGER = udi_interface.LOGGER
 Custom = udi_interface.Custom
@@ -197,6 +197,16 @@ class Controller(udi_interface.Node):
                 f"Device '{key}' needs both token= and key= (or neither).")
             LOGGER.error("Device parameter '%s' has only one of token/key", key)
             return None
+
+        for field_name, value_hex in (('token', token), ('key', key_hex)):
+            if value_hex is not None and not is_hex(value_hex):
+                self.Notices[f'cfg_{key}'] = (
+                    f"Device '{key}' has a {field_name}= that is not "
+                    f"hexadecimal. Copy it exactly as 'msmart-ng discover' "
+                    f"printed it.")
+                LOGGER.error("Device parameter '%s' has a non-hex %s",
+                             key, field_name)
+                return None
 
         return {
             'address': address_for(device_id) if device_id is not None else None,

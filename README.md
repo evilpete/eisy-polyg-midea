@@ -102,6 +102,29 @@ sent.
 Temperatures are reported in whatever `temp_units` is set to; the library works
 in Celsius internally and the node server converts in both directions.
 
+## Where credentials live
+
+**On the EISY**, in the plugin's PG3 Custom Parameters. PG3 stores them in its
+own database; nothing is written into this repository.
+
+**For `tools/standalone.py`**, in a config file written in exactly the same
+syntax, so anything that works there can be pasted straight into PG3:
+
+```
+# devices.conf
+temp_units = F
+Bedroom = ip=10.1.1.39; id=151732604872862; token=<TOKEN>; key=<KEY>
+Den     = ip=10.1.1.40; id=151732604872863; token=<TOKEN>; key=<KEY>
+```
+
+Searched in order: `--config`, `$MIDEA_CONFIG`, `./devices.conf`,
+`~/.config/midea-poly/devices.conf`, `~/.midea-devices.conf`. The tool warns if
+the file is readable by other users, and `.gitignore` excludes `devices.conf`
+so credentials are not committed by accident.
+
+`$MIDEA_TOKEN` and `$MIDEA_KEY` are used if nothing else supplies them, so
+credentials need never appear in shell history.
+
 ## Development
 
 The plugin can be exercised without an EISY or an air conditioner:
@@ -110,6 +133,22 @@ The plugin can be exercised without an EISY or an air conditioner:
 pip install msmart-ng
 python3 tests/run.py
 ```
+
+Against real hardware, with no Polyglot running:
+
+```shell
+./tools/standalone.py discover --save        # find units, write a config file
+./tools/standalone.py devices                # what is configured
+./tools/standalone.py query   --device Bedroom
+./tools/standalone.py raw     --device Bedroom
+./tools/standalone.py caps    --device Bedroom
+./tools/standalone.py watch   --device Bedroom -n 10 -i 15
+./tools/standalone.py control --device Bedroom --cmd CLISPC --value 72
+```
+
+`query` prints the ISY drivers with their decoded labels, so it shows exactly
+what the Admin Console would show; `raw` prints the library's own view. Add
+`--debug` for full protocol logging.
 
 `tests/test_offline.py` drives the controller and node classes against a fake
 device and a stub `udi_interface`. `tests/test_profile.py` checks that the ISY

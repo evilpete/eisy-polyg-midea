@@ -124,6 +124,9 @@ class MideaACNode(udi_interface.Node):
         except AuthenticationError as ex:
             LOGGER.error('Authentication failed for %s: %s', self.name, ex)
             self._set_connection(CONN_AUTH_FAILED)
+        except ValueError as ex:
+            LOGGER.error('%s has an unusable token or key: %s', self.name, ex)
+            self._set_connection(CONN_AUTH_FAILED)
         except (ProtocolError, TimeoutError, OSError) as ex:
             LOGGER.error('Could not reach %s at %s: %s',
                          self.name, self.config.get('ip'), ex)
