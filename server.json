@@ -1,0 +1,35 @@
+{
+    "name": "MideaAC",
+    "docs": "https://github.com/evilpete/eisy-polyg-midea/blob/main/README.md",
+    "type": "python3",
+    "executable": "midea-poly.py",
+    "install": "install.sh",
+    "description": "Monitor and control Midea (and associated brand) smart air conditioners locally on your LAN using the msmart-ng library.",
+    "shortPoll": "60",
+    "longPoll": "300",
+    "logLevel": "INFO",
+    "customParams": {
+        "temp_units": "F",
+        "discovery": "true",
+        "example_device": "ip=<IP ADDRESS>; id=<DEVICE ID>; token=<TOKEN>; key=<KEY>",
+        "hide_drivers": "target_humidity,swing_mode,horizontal_louver,freeze_protection,purifier,self_clean,breeze_mode,fresh_air,rate_select,aux_heat,total_energy,power_usage,defrost,compressor_frequency,indoor_coil_temperature,outdoor_coil_temperature,connection"
+    },
+    "credits": [
+        {
+            "title": "Midea AC NodeServer",
+            "author": "Peter Shipley",
+            "version": "1.0.5",
+            "date": "September 2026",
+            "source": "https://github.com/evilpete/eisy-polyg-midea",
+            "license": "https://github.com/evilpete/eisy-polyg-midea/blob/main/LICENSE"
+        },
+        {
+            "title": "msmart-ng",
+            "author": "mill1000",
+            "version": "2025.x",
+            "source": "https://github.com/mill1000/midea-msmart",
+            "license": "https://github.com/mill1000/midea-msmart/blob/main/LICENSE.md"
+        }
+    ]
+}
+

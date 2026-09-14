@@ -1,0 +1,119 @@
+<editors>
+
+  <!-- Generic on/off -->
+  <editor id="M_BOOL">
+    <range uom="2" subset="0,1" nls="M_BOOL" />
+  </editor>
+
+  <!-- Connection / health state of a device -->
+  <editor id="M_CONN">
+    <range uom="25" subset="0-4" nls="M_CONN" />
+  </editor>
+
+  <!-- Controller running state -->
+  <editor id="M_CTLST">
+    <range uom="25" subset="0-2" nls="M_CTLST" />
+  </editor>
+
+  <!-- Temperatures (read only sensors). Dual range so the plugin may report
+       either Fahrenheit (uom 17) or Celsius (uom 4) depending on configuration. -->
+  <editor id="M_TEMP">
+    <range uom="17" min="-40" max="200" prec="1" />
+    <range uom="4" min="-40" max="93" prec="1" />
+  </editor>
+
+  <!-- Target temperature status. Reported with 1 decimal so 0.5C steps show. -->
+  <editor id="M_SETPOINT">
+    <range uom="17" min="60" max="86" prec="1" />
+    <range uom="4" min="16" max="30" prec="1" />
+  </editor>
+
+  <!-- Target temperature command. Whole degrees only: with prec="0" the ISY
+       sends the literal value, avoiding the scaled-integer ambiguity. -->
+  <editor id="M_SETPOINT_CMD">
+    <range uom="17" min="60" max="86" prec="0" step="1" />
+    <range uom="4" min="16" max="30" prec="0" step="1" />
+  </editor>
+
+  <!-- Operational mode -->
+  <editor id="M_MODE">
+    <range uom="25" subset="1-6" nls="M_MODE" />
+  </editor>
+
+  <!-- Fan speed presets -->
+  <editor id="M_FAN">
+    <range uom="25" subset="20,40,60,80,100,102" nls="M_FAN" />
+  </editor>
+
+  <!-- Percentage status. Starts at 0 so an unknown value is in range. -->
+  <editor id="M_PCT">
+    <range uom="51" min="0" max="100" prec="0" />
+  </editor>
+
+  <!-- Custom (percentage) fan speed command -->
+  <editor id="M_FANPCT">
+    <range uom="51" min="1" max="100" prec="0" step="1" />
+  </editor>
+
+  <!-- Humidity -->
+  <editor id="M_HUM">
+    <range uom="22" min="0" max="100" prec="0" />
+  </editor>
+
+  <!-- Target humidity (device accepts 35-85) -->
+  <editor id="M_THUM">
+    <range uom="22" min="35" max="85" prec="0" step="1" />
+  </editor>
+
+  <!-- Swing mode -->
+  <editor id="M_SWING">
+    <range uom="25" subset="0,3,12,15" nls="M_SWING" />
+  </editor>
+
+  <!-- Louver angle positions -->
+  <editor id="M_ANGLE">
+    <range uom="25" subset="0,1,25,50,75,100" nls="M_ANGLE" />
+  </editor>
+
+  <!-- Breeze / comfort mode -->
+  <editor id="M_BREEZE">
+    <range uom="25" subset="1-4" nls="M_BREEZE" />
+  </editor>
+
+  <!-- Fresh air (ventilation) fan speed -->
+  <editor id="M_FRESH">
+    <range uom="25" subset="0,40,60,80,100" nls="M_FRESH" />
+  </editor>
+
+  <!-- Rate select / power gear -->
+  <editor id="M_RATE">
+    <range uom="25" subset="1,20,40,50,60,75,80,100" nls="M_RATE" />
+  </editor>
+
+  <!-- Auxiliary heat -->
+  <editor id="M_AUX">
+    <range uom="25" subset="0-2" nls="M_AUX" />
+  </editor>
+
+  <!-- Raw error code from the indoor unit -->
+  <editor id="M_ERR">
+    <range uom="56" min="0" max="255" prec="0" />
+  </editor>
+
+  <!-- Energy / power -->
+  <editor id="M_KWH">
+    <range uom="33" min="0" max="1000000" prec="2" />
+  </editor>
+  <editor id="M_WATT">
+    <range uom="73" min="0" max="30000" prec="0" />
+  </editor>
+  <editor id="M_HZ">
+    <range uom="90" min="0" max="255" prec="0" />
+  </editor>
+
+  <!-- Counts -->
+  <editor id="M_COUNT">
+    <range uom="56" min="0" max="255" prec="0" />
+  </editor>
+
+</editors>
